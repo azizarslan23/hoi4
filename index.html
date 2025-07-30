@@ -1,156 +1,511 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>WW2 Strateji Oyunu</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #1e1e1e;
-      color: #fff;
-    }
-    header {
-      background-color: #2e2e2e;
-      padding: 1rem;
-      text-align: center;
-    }
-    main {
-      display: flex;
-      flex-direction: row;
-      height: calc(100vh - 80px);
-    }
-    section {
-      padding: 1rem;
-      flex: 1;
-      overflow-y: auto;
-      border-right: 1px solid #444;
-    }
-    button {
-      background: #444;
-      color: white;
-      border: none;
-      padding: 10px;
-      margin: 5px 0;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover {
-      background: #666;
-    }
-    .country-button {
-      display: inline-block;
-      margin: 10px;
-      padding: 15px 25px;
-      background-color: #333;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-    .hidden { display: none; }
-  </style>
+<meta charset="UTF-8" />
+<title>HOI4 Tarzı Savaş Oyunu</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #222; color: #eee; margin:0; padding:0;}
+  #game { max-width: 1200px; margin: auto; padding: 20px; }
+  h1 { text-align: center; }
+  #map { border: 2px solid #555; background: #333; width: 100%; height: 400px; position: relative; margin-bottom: 20px; }
+  .city {
+    position: absolute;
+    background: #f90;
+    border-radius: 50%;
+    width: 14px; height: 14px;
+    text-align: center;
+    line-height: 14px;
+    font-size: 10px;
+    color: black;
+    cursor: pointer;
+  }
+  .country-panel, .focus-panel, .diplomacy-panel, .production-panel, .army-panel {
+    background: #444; 
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+  }
+  button {
+    background: #666;
+    color: #eee;
+    border: none;
+    padding: 6px 12px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #888;
+  }
+  #log {
+    height: 150px;
+    background: #111;
+    overflow-y: scroll;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .focus {
+    background: #08f;
+    margin: 4px 0;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .focus.completed {
+    background: #0c0;
+    text-decoration: line-through;
+    cursor: default;
+  }
+</style>
 </head>
 <body>
+<div id="game">
+  <h1>HOI4 Tarzı 2. Dünya Savaşı Oyunu (1936)</h1>
 
-<header>
-  <h1>🌍 HOI4 Tarzı WW2 Strateji Oyunu</h1>
-</header>
+  <div id="map"></div>
 
-<div id="country-select" style="text-align:center; padding: 2rem;">
-  <h2>Bir Ülke Seçin</h2>
-  <div class="country-button" onclick="selectCountry('almanya')">🇩🇪 Almanya</div>
-  <div class="country-button" onclick="selectCountry('sovyetler')">🇷🇺 Sovyetler</div>
-  <div class="country-button" onclick="selectCountry('fransa')">🇫🇷 Fransa</div>
+  <div class="country-panel">
+    <h2 id="country-name">Ülke Seçiniz</h2>
+    <div id="country-info"></div>
+  </div>
+
+  <div class="focus-panel">
+    <h3>Odak Ağacı</h3>
+    <div id="focus-tree"></div>
+  </div>
+
+  <div class="diplomacy-panel">
+    <h3>Diplomasi</h3>
+    <div id="diplomacy-info"></div>
+  </div>
+
+  <div class="production-panel">
+    <h3>Fabrika ve Üretim</h3>
+    <div id="production-info"></div>
+  </div>
+
+  <div class="army-panel">
+    <h3>Askeri Durum</h3>
+    <div id="army-info"></div>
+  </div>
+
+  <h3>Olaylar</h3>
+  <div id="log"></div>
 </div>
 
-<main id="game-ui" class="hidden">
-  <section>
-    <h2>Odak Ağacı</h2>
-    <div id="focus-tree"></div>
-  </section>
-
-  <section>
-    <h2>Diplomasi</h2>
-    <div id="diplomacy-panel"></div>
-  </section>
-
-  <section>
-    <h2>Fabrikalar ve Üretim</h2>
-    <div id="factory-info"></div>
-    <button onclick="produceMilitary()">🔫 Askeri Üret</button>
-    <button onclick="produceCivil()">🏭 Sivil Üretim</button>
-  </section>
-
-  <section>
-    <h2>Ordu ve Savaş</h2>
-    <p>Asker Sayın: <span id="army-count">0</span></p>
-    <button onclick="trainArmy()">👨‍✈️ Asker Eğit</button>
-    <button onclick="declareWar()">🔥 Savaş İlan Et</button>
-  </section>
-</main>
-
 <script>
-  let currentCountry = "";
-  let army = 0;
-  let civFactories = 2;
-  let milFactories = 2;
-  let focuses = {
-    almanya: [
-      "Versailles’i Yık",
-      "Rheinland’ı Askerleştir",
-      "Avusturya’yı İlhak Et"
-    ],
-    sovyetler: [
-      "Beş Yıllık Plan",
-      "Siyasi Temizlik",
-      "Kolektivizasyon"
-    ],
-    fransa: [
-      "Maginot Hattı",
-      "İttifak Arayışı",
-      "Yeniden Silahlanma"
-    ]
-  };
-  let relations = {
-    almanya: {sovyetler: "tarafsız", fransa: "düşman"},
-    sovyetler: {almanya: "tarafsız", fransa: "tarafsız"},
-    fransa: {almanya: "düşman", sovyetler: "tarafsız"}
+  // --- Temel Veri Yapıları ---
+
+  // Şehirler (harita koordinatları % olarak verilmiştir)
+  const cities = [
+    { id: "berlin", name: "Berlin", country: "GER", x: 60, y: 40 },
+    { id: "paris", name: "Paris", country: "FRA", x: 40, y: 50 },
+    { id: "london", name: "Londra", country: "ENG", x: 35, y: 40 },
+    { id: "moscow", name: "Moskova", country: "SOV", x: 80, y: 60 },
+    { id: "rome", name: "Roma", country: "ITA", x: 55, y: 65 },
+    { id: "warsaw", name: "Varşova", country: "POL", x: 68, y: 50 },
+    { id: "budapest", name: "Budapeşte", country: "HUN", x: 65, y: 58 },
+    { id: "prague", name: "Prag", country: "CZE", x: 63, y: 52 },
+    { id: "vienna", name: "Viyana", country: "AUT", x: 62, y: 57 },
+    { id: "belgrade", name: "Belgrad", country: "YUG", x: 67, y: 65 },
+  ];
+
+  // Ülkeler
+  const countries = {
+    GER: {
+      name: "Almanya",
+      capital: "berlin",
+      factories: { military: 20, civilian: 15, naval: 10 },
+      resources: { steel: 100, oil: 80, manpower: 500 },
+      focuses: [
+        { id: "rearmament", name: "Yeniden Silahlanma", description: "Orduyu güçlendirin.", completed: false },
+        { id: "autarky", name: "Otonomi Ekonomisi", description: "Kendi kaynaklarımızı kullan.", completed: false },
+        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomatik etkiyi artır.", completed: false },
+        { id: "fortify_borders", name: "Sınırları Güçlendir", description: "Savunmayı artır.", completed: false },
+        { id: "build_navy", name: "Donanma İnşası", description: "Deniz gücünü artır.", completed: false },
+        { id: "air_superiority", name: "Hava Üstünlüğü", description: "Hava kuvvetlerini geliştir.", completed: false },
+        { id: "blitzkrieg", name: "Yıldırım Savaşı", description: "Hızlı saldırı taktikleri.", completed: false },
+        { id: "research_tanks", name: "Tank Araştırması", description: "Tank teknolojisini geliştirin.", completed: false },
+        { id: "infrastructure", name: "Altyapı Geliştirme", description: "Lojistik ve ulaşımı artır.", completed: false },
+        { id: "industrial_expansion", name: "Sanayi Genişletmesi", description: "Fabrika sayısını artır.", completed: false },
+      ],
+      army: { infantry: 50, tanks: 20, planes: 30, ships: 15 },
+      diplomacy: { allies: ["ITA"], enemies: ["FRA", "ENG", "SOV"], neutral: ["POL", "HUN"] },
+    },
+    FRA: {
+      name: "Fransa",
+      capital: "paris",
+      factories: { military: 18, civilian: 20, naval: 12 },
+      resources: { steel: 80, oil: 60, manpower: 450 },
+      focuses: [
+        { id: "maginot_line", name: "Maginot Hattı", description: "Sınır savunması güçlendir.", completed: false },
+        { id: "defensive_doctrine", name: "Savunma Doktrini", description: "Orduyu savunma üzerine kur.", completed: false },
+        { id: "build_airforce", name: "Hava Kuvvetleri İnşası", description: "Hava gücünü artır.", completed: false },
+        { id: "research_artillery", name: "Topçu Araştırması", description: "Topçu gücünü artır.", completed: false },
+        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasi ile etkiyi artır.", completed: false },
+        { id: "industrial_upgrade", name: "Sanayi Modernizasyonu", description: "Fabrikaları yenile.", completed: false },
+        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
+        { id: "naval_build", name: "Donanma İnşası", description: "Deniz gücünü artır.", completed: false },
+        { id: "alliances", name: "Müttefiklerle İttifak", description: "Diplomatik bağları güçlendir.", completed: false },
+        { id: "air_superiority", name: "Hava Üstünlüğü", description: "Hava kuvvetlerini geliştir.", completed: false },
+      ],
+      army: { infantry: 40, tanks: 10, planes: 25, ships: 20 },
+      diplomacy: { allies: ["ENG"], enemies: ["GER"], neutral: ["ITA", "POL"] },
+    },
+    ENG: {
+      name: "İngiltere",
+      capital: "london",
+      factories: { military: 15, civilian: 18, naval: 25 },
+      resources: { steel: 90, oil: 110, manpower: 400 },
+      focuses: [
+        { id: "naval_supremacy", name: "Deniz Üstünlüğü", description: "Deniz gücünü artır.", completed: false },
+        { id: "air_defense", name: "Hava Savunması", description: "Hava üslerini güçlendir.", completed: false },
+        { id: "industrial_growth", name: "Sanayi Büyümesi", description: "Fabrika üretimini artır.", completed: false },
+        { id: "alliance_strengthen", name: "İttifakları Güçlendir", description: "Diplomatik bağları artır.", completed: false },
+        { id: "research_radar", name: "Radar Araştırması", description: "Teknolojiyi geliştir.", completed: false },
+        { id: "colonial_recruitment", name: "Kolonilerden Seferberlik", description: "Manpower artır.", completed: false },
+        { id: "air_force_expansion", name: "Hava Kuvvetleri Genişletmesi", description: "Uçak sayısını artır.", completed: false },
+        { id: "tank_production", name: "Tank Üretimi", description: "Tank gücünü artır.", completed: false },
+        { id: "fortify_islands", name: "Adaları Güçlendir", description: "Savunmayı artır.", completed: false },
+        { id: "spy_network", name: "Casus Ağı", description: "İstihbarat faaliyetleri.", completed: false },
+      ],
+      army: { infantry: 35, tanks: 15, planes: 40, ships: 30 },
+      diplomacy: { allies: ["FRA"], enemies: ["GER"], neutral: ["SOV"] },
+    },
+    SOV: {
+      name: "Sovyetler Birliği",
+      capital: "moscow",
+      factories: { military: 22, civilian: 17, naval: 8 },
+      resources: { steel: 120, oil: 90, manpower: 600 },
+      focuses: [
+        { id: "industrialization", name: "Sanayileşme", description: "Sanayi gücünü artır.", completed: false },
+        { id: "collectivization", name: "Kolektivizasyon", description: "Tarımı organize et.", completed: false },
+        { id: "red_army_expansion", name: "Kızıl Ordu Genişletme", description: "Orduyu büyüt.", completed: false },
+        { id: "tank_development", name: "Tank Geliştirme", description: "Tank teknolojisi.", completed: false },
+        { id: "air_force_growth", name: "Hava Kuvvetleri Büyümesi", description: "Hava gücünü artır.", completed: false },
+        { id: "spy_network", name: "Casus Ağı", description: "İstihbarat.", completed: false },
+        { id: "fortify_west", name: "Batı Sınırlarını Güçlendir", description: "Savunmayı artır.", completed: false },
+        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
+        { id: "research_artillery", name: "Topçu Araştırması", description: "Topçu gücünü artır.", completed: false },
+        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasiyle etkiyi artır.", completed: false },
+      ],
+      army: { infantry: 60, tanks: 25, planes: 35, ships: 10 },
+      diplomacy: { allies: [], enemies: ["GER"], neutral: ["POL"] },
+    },
+    ITA: {
+      name: "İtalya",
+      capital: "rome",
+      factories: { military: 12, civilian: 10, naval: 7 },
+      resources: { steel: 70, oil: 50, manpower: 350 },
+      focuses: [
+        { id: "fascist_expansion", name: "Faşist Yayılma", description: "Toprak kazan.", completed: false },
+        { id: "build_aviation", name: "Hava Kuvvetleri İnşası", description: "Uçak üretimini artır.", completed: false },
+        { id: "naval_build", name: "Donanma İnşası", description: "Deniz gücünü geliştir.", completed: false },
+        { id: "infantry_upgrades", name: "Piyade Yükseltmeleri", description: "Askeri güç artır.", completed: false },
+        { id: "infrastructure", name: "Altyapı Geliştirme", description: "Lojistik artır.", completed: false },
+        { id: "industrial_growth", name: "Sanayi Büyümesi", description: "Fabrika sayısını artır.", completed: false },
+        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
+        { id: "research_tanks", name: "Tank Araştırması", description: "Tank teknolojisini geliştir.", completed: false },
+        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasi geliştir.", completed: false },
+        { id: "fortify_borders", name: "Sınır Güçlendirme", description: "Savunmayı artır.", completed: false },
+      ],
+      army: { infantry: 30, tanks: 10, planes: 15, ships: 12 },
+      diplomacy: { allies: ["GER"], enemies: ["FRA"], neutral: ["ENG"] },
+    },
   };
 
-  function selectCountry(country) {
-    currentCountry = country;
-    document.getElementById("country-select").classList.add("hidden");
-    document.getElementById("game-ui").classList.remove("hidden");
-    renderFocusTree();
-    renderDiplomacy();
-    renderFactory();
+  let selectedCountryCode = null;
+
+  // --- Yardımcı Fonksiyonlar ---
+
+  // Haritaya şehirleri yerleştir
+  function renderMap() {
+    const map = document.getElementById("map");
+    map.innerHTML = "";
+    cities.forEach(city => {
+      const cityDiv = document.createElement("div");
+      cityDiv.className = "city";
+      cityDiv.style.left = city.x + "%";
+      cityDiv.style.top = city.y + "%";
+      cityDiv.title = city.name + " (" + countries[city.country].name + ")";
+      cityDiv.textContent = city.name[0];
+      cityDiv.onclick = () => selectCountry(city.country);
+      map.appendChild(cityDiv);
+    });
   }
 
-  function renderFocusTree() {
-    const tree = focuses[currentCountry];
+  // Ülke seçimi
+  function selectCountry(code) {
+    selectedCountryCode = code;
+    const country = countries[code];
+    document.getElementById("country-name").textContent = country.name;
+    renderCountryInfo(country);
+    renderFocusTree(country);
+    renderDiplomacy(country);
+    renderProduction(country);
+    renderArmy(country);
+    log(`"${country.name}" seçildi.`);
+  }
+
+  // Ülke bilgileri
+  function renderCountryInfo(country) {
+    const info = document.getElementById("country-info");
+    info.innerHTML = `
+      <strong>Başkent:</strong> ${cities.find(c => c.id === country.capital).name}<br>
+      <strong>Fabrikalar:</strong> Askeri: ${country.factories.military}, Sivil: ${country.factories.civilian}, Deniz: ${country.factories.naval}<br>
+      <strong>Kaynaklar:</strong> Çelik: ${country.resources.steel}, Petrol: ${country.resources.oil}, İşgücü: ${country.resources.manpower}<br>
+    `;
+  }
+
+  // Odak Ağacı
+  function renderFocusTree(country) {
     const container = document.getElementById("focus-tree");
     container.innerHTML = "";
-    tree.forEach((f, i) => {
-      const btn = document.createElement("button");
-      btn.innerText = f;
-      btn.onclick = () => alert(`Odak tamamlandı: ${f}`);
-      container.appendChild(btn);
+    country.focuses.forEach(focus => {
+      const div = document.createElement("div");
+      div.className = "focus" + (focus.completed ? " completed" : "");
+      div.textContent = focus.name;
+      div.title = focus.description;
+      if (!focus.completed) {
+        div.onclick = () => completeFocus(country, focus.id);
+      }
+      container.appendChild(div);
     });
   }
 
-  function renderDiplomacy() {
-    const panel = document.getElementById("diplomacy-panel");
-    panel.innerHTML = "";
-    Object.keys(relations[currentCountry]).forEach(target => {
-      const status = relations[currentCountry][target];
-      const btn = document.createElement("button");
-      btn.innerText = `${target.toUpperCase()} (${status})`;
-      btn.onclick = () => {
-        relations[currentCountry][target] = (status === "düşman") ? "tarafsız" : "düşman";
-        alert(`${target.toUpperCase()} ile ilişki ${relations[currentCountry][target]} oldu`);
-        renderDiplomacy();
-      };
-      panel.appendChild(btn);
-    });
+  // Odak tamamla
+  function completeFocus(country, focusId) {
+    const focus = country.focuses.find(f => f.id === focusId);
+    if (focus && !focus.completed) {
+      focus.completed = true;
+      applyFocusEffects(country, focusId);
+      renderFocusTree(country);
+      log(`${country.name} odak "${focus.name}" tamamlandı.`);
+    }
   }
+
+  // Odak etkileri
+  function applyFocusEffects(country, focusId) {
+    switch (focusId) {
+      case "rearmament":
+      case "red_army_expansion":
+      case "mobilization":
+        country.resources.manpower += 50;
+        break;
+      case "industrial_expansion":
+      case "industrialization":
+      case "industrial_growth":
+        country.factories.civilian += 5;
+        country.factories.military += 5;
+        break;
+      case "build_navy":
+      case "naval_build":
+      case "naval_build":
+        country.factories.naval += 5;
+        break;
+      case "expand_influence":
+        // Diplomatik ilişkileri artır (örnek: düşmanları azalt)
+        if (country.diplomacy.enemies.length > 0) {
+          country.diplomacy.enemies.pop();
+        }
+        break;
+      case "fortify_borders":
+      case "fortify_west":
+      case "fortify_borders":
+      case "fortify_islands":
+        // Savunmayı artır - ordu güçlendirme
+        country.army.infantry += 5;
+        break;
+      case "blitzkrieg":
+        country.army.tanks += 10;
+        break;
+      case "research_tanks":
+      case "tank_development":
+      case "tank_production":
+        country.army.tanks += 5;
+        break;
+      case "air_superiority":
+      case "air_force_expansion":
+      case "air_force_growth":
+        country.army.planes += 10;
+        break;
+      // Diğer odaklar için eklemeler yapılabilir.
+    }
+  }
+
+  // Diplomasi
+  function renderDiplomacy(country) {
+    const container = document.getElementById("diplomacy-info");
+    container.innerHTML = `
+      <strong>Müttefikler:</strong> ${country.diplomacy.allies.map(c => countries[c].name).join(", ") || "Yok"}<br>
+      <strong>Düşmanlar:</strong> ${country.diplomacy.enemies.map(c => countries[c].name).join(", ") || "Yok"}<br>
+      <strong>Tarafsızlar:</strong> ${country.diplomacy.neutral.map(c => countries[c].name).join(", ") || "Yok"}<br>
+      <button onclick="declareWar()">Savaş İlan Et</button>
+      <button onclick="offerPeace()">Barış Teklifi</button>
+    `;
+  }
+
+  // Savaş ilanı (örnek: seçilen ülke düşman eklenir)
+  function declareWar() {
+    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+    const country = countries[selectedCountryCode];
+    const enemyCode = prompt("Kime savaş ilan etmek istiyorsunuz? Ülke kodu girin (örn: GER, FRA):");
+    if (!enemyCode || !countries[enemyCode]) {
+      alert("Geçersiz ülke kodu.");
+      return;
+    }
+    if (!country.diplomacy.enemies.includes(enemyCode)) {
+      country.diplomacy.enemies.push(enemyCode);
+      // Karşılıklı düşman ekle
+      const enemy = countries[enemyCode];
+      if (!enemy.diplomacy.enemies.includes(selectedCountryCode)) {
+        enemy.diplomacy.enemies.push(selectedCountryCode);
+      }
+      log(`${country.name} ${enemy.name} ile savaşa girdi!`);
+      renderDiplomacy(country);
+    } else {
+      alert("Zaten düşman durumundasınız.");
+    }
+  }
+
+  // Barış teklifi (örnek: düşmanlardan çıkar)
+  function offerPeace() {
+    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+    const country = countries[selectedCountryCode];
+    const enemyCode = prompt("Kime barış teklif etmek istiyorsunuz? Ülke kodu girin:");
+    if (!enemyCode || !countries[enemyCode]) {
+      alert("Geçersiz ülke kodu.");
+      return;
+    }
+    if (country.diplomacy.enemies.includes(enemyCode)) {
+      country.diplomacy.enemies = country.diplomacy.enemies.filter(c => c !== enemyCode);
+      // Karşılıklı düşmanlıktan çıkar
+      const enemy = countries[enemyCode];
+      enemy.diplomacy.enemies = enemy.diplomacy.enemies.filter(c => c !== selectedCountryCode);
+      log(`${country.name} ve ${enemy.name} barış yaptı.`);
+      renderDiplomacy(country);
+    } else {
+      alert("Zaten düşman değilsiniz.");
+    }
+  }
+
+  // Üretim paneli
+  function renderProduction(country) {
+    const container = document.getElementById("production-info");
+    container.innerHTML = `
+      <strong>Askeri Fabrikalar:</strong> ${country.factories.military}<br>
+      <strong>Sivil Fabrikalar:</strong> ${country.factories.civilian}<br>
+      <strong>Deniz Fabrikaları:</strong> ${country.factories.naval}<br>
+      <button onclick="buildFactory('military')">Askeri Fabrika İnşa Et (Kaynak: 50 Çelik)</button>
+      <button onclick="buildFactory('civilian')">Sivil Fabrika İnşa Et (Kaynak: 30 Çelik)</button>
+      <button onclick="buildFactory('naval')">Deniz Fabrikası İnşa Et (Kaynak: 40 Çelik)</button>
+    `;
+  }
+
+  // Fabrika inşası
+  function buildFactory(type) {
+    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+    const country = countries[selectedCountryCode];
+    let cost = 0;
+    switch(type) {
+      case "military": cost = 50; break;
+      case "civilian": cost = 30; break;
+      case "naval": cost = 40; break;
+    }
+    if (country.resources.steel >= cost) {
+      country.resources.steel -= cost;
+      country.factories[type]++;
+      log(`${country.name} bir ${type} fabrikası inşa etti.`);
+      renderProduction(country);
+      renderCountryInfo(country);
+    } else {
+      alert("Yeterli çelik yok.");
+    }
+  }
+
+  // Askeri panel
+  function renderArmy(country) {
+    const container = document.getElementById("army-info");
+    container.innerHTML = `
+      <strong>Piyade:</strong> ${country.army.infantry}<br>
+      <strong>Tank:</strong> ${country.army.tanks}<br>
+      <strong>Uçak:</strong> ${country.army.planes}<br>
+      <strong>Gemi:</strong> ${country.army.ships}<br>
+      <button onclick="trainArmy('infantry')">Piyade Eğit (İşgücü: 10)</button>
+      <button onclick="trainArmy('tanks')">Tank Üret (Fabrika: 5, Çelik: 30)</button>
+      <button onclick="trainArmy('planes')">Uçak Üret (Fabrika: 3, Çelik: 20)</button>
+      <button onclick="trainArmy('ships')">Gemi İnşa Et (Fabrika: 4, Çelik: 40)</button>
+    `;
+  }
+
+  // Askeri eğitim / üretim
+  function trainArmy(type) {
+    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+    const country = countries[selectedCountryCode];
+    switch(type) {
+      case "infantry":
+        if (country.resources.manpower >= 10) {
+          country.resources.manpower -= 10;
+          country.army.infantry++;
+          log(`${country.name} bir piyade birimi eğitti.`);
+        } else {
+          alert("Yeterli işgücü yok.");
+        }
+        break;
+      case "tanks":
+        if (country.factories.military >=5 && country.resources.steel >= 30) {
+          country.factories.military -= 5;
+          country.resources.steel -= 30;
+          country.army.tanks++;
+          log(`${country.name} bir tank üretti.`);
+        } else {
+          alert("Yeterli fabrika veya çelik yok.");
+        }
+        break;
+      case "planes":
+        if (country.factories.military >=3 && country.resources.steel >= 20) {
+          country.factories.military -= 3;
+          country.resources.steel -= 20;
+          country.army.planes++;
+          log(`${country.name} bir uçak üretti.`);
+        } else {
+          alert("Yeterli fabrika veya çelik yok.");
+        }
+        break;
+      case "ships":
+        if (country.factories.naval >=4 && country.resources.steel >= 40) {
+          country.factories.naval -= 4;
+          country.resources.steel -= 40;
+          country.army.ships++;
+          log(`${country.name} bir gemi inşa etti.`);
+        } else {
+          alert("Yeterli fabrika veya çelik yok.");
+        }
+        break;
+    }
+    renderArmy(country);
+    renderProduction(country);
+    renderCountryInfo(country);
+  }
+
+  // Olay günlüğü
+  function log(text) {
+    const logDiv = document.getElementById("log");
+    const time = new Date().toLocaleTimeString();
+    logDiv.innerHTML += `[${time}] ${text}<br>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
+
+  // Oyunu başlat
+  function init() {
+    renderMap();
+    // Varsayılan ülke seçimi Almanya
+    selectCountry("GER");
+  }
+
+  window.onload = init;
+
+</script>
+</body>
+</html>
