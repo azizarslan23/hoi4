@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>HOI4 Tarzı Arayüz</title>
+<title>HOI4 Stilinde Strateji Oyunu</title>
 <style>
-  /* Genel reset ve temel font */
+  /* --- GENEL STİL --- */
   * {
     box-sizing: border-box;
   }
-  body {
-    margin: 0; padding: 0;
-    background: #1e2228;
+  body, html {
+    margin:0; padding:0; height: 100%;
+    background: #1a1d24;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #eee;
+    color: #ddd;
     user-select: none;
+    overflow: hidden;
+  }
+  a {
+    color: #58a6ff;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
   }
 
   #app {
     display: grid;
-    grid-template-columns: 300px 1fr 400px;
-    grid-template-rows: 90px 1fr 200px;
+    grid-template-columns: 280px 1fr 420px;
+    grid-template-rows: 90px 1fr 240px;
     grid-template-areas:
       "header header header"
       "sidebar map rightpanel"
@@ -31,311 +39,533 @@
   /* HEADER */
   header {
     grid-area: header;
-    background: #2d313a;
+    background: #2c303a;
     border-bottom: 2px solid #444a55;
     display: flex;
     align-items: center;
-    padding: 0 20px;
-    gap: 15px;
+    padding: 0 25px;
+    gap: 20px;
+    box-shadow: inset 0 -3px 8px #000a;
   }
-
-  /* Bayrak ve ülke bilgisi */
   #country-flag {
-    width: 60px;
-    height: 40px;
-    background: #444a55;
-    border: 2px solid #666d7a;
-    border-radius: 4px;
+    width: 68px;
+    height: 42px;
+    background: #666;
+    border: 3px solid #555a66;
+    border-radius: 5px;
+    box-shadow: 0 0 8px #000c inset;
     flex-shrink: 0;
   }
-
   #country-info {
     flex-grow: 1;
   }
-
   #country-info h1 {
     margin: 0;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 700;
     color: #f5d547;
-    text-shadow: 1px 1px 3px #0008;
+    text-shadow: 1px 1px 3px #000a;
   }
-
   #country-info p {
-    margin: 2px 0 0 0;
+    margin: 4px 0 0 0;
     font-size: 14px;
-    color: #ccc;
+    color: #aaa;
   }
 
   /* SIDEBAR (Odak Ağacı) */
   #sidebar {
     grid-area: sidebar;
-    background: #252a33;
+    background: #22262f;
     border-right: 2px solid #444a55;
     overflow-y: auto;
-    padding: 10px 15px;
+    padding: 10px 18px;
   }
-
   #sidebar h2 {
     margin-top: 0;
     color: #f5d547;
-    font-size: 18px;
-    border-bottom: 1px solid #444a55;
-    padding-bottom: 8px;
+    font-size: 20px;
+    border-bottom: 2px solid #444a55;
+    padding-bottom: 10px;
+    user-select:none;
   }
-
   .focus-tree {
+    margin-top: 15px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 12px;
   }
-
   .focus {
-    background: #3a3f4a;
-    padding: 10px 15px;
-    border-radius: 6px;
+    background: #394156;
+    border-radius: 7px;
+    padding: 14px 18px;
     cursor: pointer;
-    box-shadow: inset 0 0 8px #0008;
-    color: #eee;
-    user-select: none;
-    transition: background 0.3s ease;
+    box-shadow: inset 0 0 14px #000a;
+    color: #ddd;
+    font-weight: 600;
+    user-select:none;
+    position: relative;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
   }
-
-  .focus:hover:not(.completed) {
+  .focus:hover:not(.completed):not(.locked) {
     background: #5c62ab;
+    box-shadow: 0 0 12px #5c62abcc;
   }
-
   .focus.completed {
-    background: #427f46;
+    background: #3d6c3d;
     color: #b6e2a1;
     text-decoration: line-through;
     cursor: default;
-    box-shadow: inset 0 0 8px #2a4a1a;
+    box-shadow: inset 0 0 12px #2a4a1a;
+  }
+  .focus.locked {
+    background: #2a2f3a;
+    color: #666c7d;
+    cursor: not-allowed;
+  }
+  .focus .desc {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 5px;
+    font-weight: 400;
+  }
+  .focus .requirements {
+    font-size: 10px;
+    color: #bbb;
+    margin-top: 6px;
+  }
+  /* Bağlantı çizgileri odaklar arası */
+  .focus-line {
+    position: absolute;
+    width: 4px;
+    background: #5c62abcc;
+    left: 10px;
+    top: 100%;
+    height: 20px;
+    border-radius: 2px;
   }
 
   /* MAP */
   #map {
     grid-area: map;
-    background: #1f2128 url('https://upload.wikimedia.org/wikipedia/commons/e/e5/Europe_blank_map_1936.svg') no-repeat center;
+    background: #1e212a url('https://upload.wikimedia.org/wikipedia/commons/e/e5/Europe_blank_map_1936.svg') no-repeat center;
     background-size: contain;
     border: 2px solid #444a55;
-    border-radius: 6px;
+    border-radius: 7px;
     position: relative;
+    box-shadow: 0 0 15px #000a inset;
   }
 
-  /* Şehir işaretleri */
+  /* Şehirler */
   .city {
     position: absolute;
     background: #f5d547;
     border-radius: 50%;
-    width: 16px; height: 16px;
-    box-shadow: 0 0 6px #f5d547aa;
+    width: 18px; height: 18px;
+    box-shadow: 0 0 8px #f5d547aa;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     color: #222;
-    font-size: 12px;
+    font-size: 13px;
     user-select: none;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    border: 1.5px solid #e6da51;
   }
   .city:hover {
-    transform: scale(1.3);
-    box-shadow: 0 0 12px #f5d547dd;
+    transform: scale(1.4);
+    box-shadow: 0 0 16px #f5d547dd;
+  }
+  .city.selected {
+    box-shadow: 0 0 18px 3px #5c62ab;
+    border-color: #5c62ab;
+    transform: scale(1.5);
   }
 
   /* RIGHT PANEL */
   #rightpanel {
     grid-area: rightpanel;
-    background: #252a33;
+    background: #22262f;
     border-left: 2px solid #444a55;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 10px 15px;
+    gap: 15px;
+    padding: 15px 20px;
     overflow-y: auto;
   }
-
   .panel {
-    background: #2d313a;
-    border-radius: 6px;
-    padding: 12px 15px;
-    box-shadow: inset 0 0 10px #0006;
+    background: #2c303a;
+    border-radius: 8px;
+    padding: 18px 20px;
+    box-shadow: inset 0 0 12px #0006;
+    user-select: none;
   }
-
   .panel h3 {
     margin-top: 0;
     color: #f5d547;
-    font-size: 16px;
-    border-bottom: 1px solid #444a55;
-    padding-bottom: 6px;
+    font-size: 18px;
+    border-bottom: 1.5px solid #444a55;
+    padding-bottom: 10px;
   }
 
+  /* Butonlar */
   .btn {
-    background: #3a3f4a;
-    color: #eee;
+    background: #394156;
+    color: #ddd;
     border: none;
-    border-radius: 4px;
-    padding: 8px 12px;
-    margin: 5px 2px 0 0;
+    border-radius: 6px;
+    padding: 9px 16px;
+    margin-top: 12px;
     cursor: pointer;
+    font-weight: 600;
+    box-shadow: 0 0 7px #0008 inset;
     transition: background 0.25s ease;
   }
-  .btn:hover {
+  .btn:hover:not(:disabled) {
     background: #5c62ab;
+    box-shadow: 0 0 12px #5c62ab;
+  }
+  .btn:disabled {
+    background: #22262f;
+    cursor: not-allowed;
+    color: #555;
+    box-shadow: none;
+  }
+
+  /* Listeler */
+  .list-item {
+    margin: 6px 0;
+    padding: 6px 8px;
+    background: #394156;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  .list-item.negative {
+    color: #ff7070;
+  }
+  .list-item.positive {
+    color: #7ff07f;
+  }
+
+  /* Production queue */
+  .production-queue {
+    margin-top: 12px;
+    max-height: 140px;
+    overflow-y: auto;
+    border: 1px solid #444a55;
+    border-radius: 6px;
+    background: #1f222a;
+  }
+  .production-queue-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-bottom: 1px solid #444a55;
+    font-size: 13px;
+    cursor: default;
+  }
+  .production-queue-item:last-child {
+    border-bottom: none;
+  }
+  .production-queue-item button {
+    background: transparent;
+    border: none;
+    color: #f55;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .production-queue-item button:hover {
+    color: #ff9999;
   }
 
   /* LOG */
   #log {
     grid-area: log;
-    background: #22262e;
+    background: #191c22;
     border-top: 2px solid #444a55;
-    padding: 10px 15px;
-    font-size: 13px;
+    padding: 14px 20px;
+    font-size: 14px;
     overflow-y: auto;
-    box-shadow: inset 0 0 8px #000a;
-    line-height: 1.3;
-    height: 200px;
+    box-shadow: inset 0 0 10px #000a;
+    line-height: 1.4;
+    font-family: "Courier New", Courier, monospace;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    background: #2d2f38cc;
+    border: 1.5px solid #5c62ab;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #eee;
+    max-width: 260px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .tooltip.visible {
+    opacity: 1;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #191c22;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #5c62abcc;
+    border-radius: 4px;
   }
 </style>
 </head>
 <body>
 <div id="app">
-
   <header>
-    <div id="country-flag"></div>
+    <div id="country-flag" title="Ülke Bayrağı"></div>
     <div id="country-info">
       <h1>Ülke Adı</h1>
-      <p>Başkent: - | Manpower: - | Çelik: - | Petrol: -</p>
+      <p>Başkent: - | İşgücü: - | Çelik: - | Petrol: -</p>
     </div>
   </header>
 
   <aside id="sidebar">
     <h2>Odak Ağacı</h2>
-    <div class="focus-tree" id="focus-tree">
-      <!-- Odaklar buraya gelecek -->
-    </div>
+    <div class="focus-tree" id="focus-tree"></div>
   </aside>
 
-  <main id="map">
-    <!-- Şehir işaretleri -->
-  </main>
+  <main id="map"></main>
 
   <section id="rightpanel">
     <div class="panel" id="diplomacy-panel">
       <h3>Diplomasi</h3>
-      <div id="diplomacy-info">
-        <!-- Diplomasi bilgisi -->
-      </div>
+      <div id="diplomacy-info"></div>
     </div>
     <div class="panel" id="production-panel">
       <h3>Fabrika & Üretim</h3>
-      <div id="production-info">
-        <!-- Üretim bilgisi -->
-      </div>
+      <div id="production-info"></div>
+      <button class="btn" id="btn-build-civilian">Sivil Fabrika İnşa Et (30 Çelik)</button>
+      <button class="btn" id="btn-build-military">Askeri Fabrika İnşa Et (50 Çelik)</button>
+      <button class="btn" id="btn-build-naval">Deniz Fabrikası İnşa Et (40 Çelik)</button>
+
+      <h4 style="color:#f5d547; margin-top:15px; user-select:none;">Üretim Kuyruğu</h4>
+      <div class="production-queue" id="production-queue"></div>
     </div>
     <div class="panel" id="army-panel">
       <h3>Ordu</h3>
-      <div id="army-info">
-        <!-- Ordu bilgisi -->
-      </div>
+      <div id="army-info"></div>
+
+      <h4 style="color:#f5d547; margin-top:15px; user-select:none;">Askeri Üretim</h4>
+      <button class="btn" id="btn-train-infantry">Piyade Eğit (İşgücü: 10)</button>
+      <button class="btn" id="btn-produce-tank">Tank Üret (Fab: 5, Çelik: 30)</button>
+      <button class="btn" id="btn-produce-plane">Uçak Üret (Fab: 3, Çelik: 20)</button>
+      <button class="btn" id="btn-produce-ship">Gemi İnşa Et (Fab: 4, Çelik: 40)</button>
     </div>
   </section>
 
-  <footer id="log">
-    <!-- Olay günlüğü -->
-  </footer>
-
+  <footer id="log"></footer>
 </div>
 
-<script>
-  // Örnek şehir verisi
-  const cities = [
-    { id: "berlin", name: "Berlin", country: "GER", x: 60, y: 40 },
-    { id: "paris", name: "Paris", country: "FRA", x: 40, y: 50 },
-    { id: "london", name: "Londra", country: "ENG", x: 35, y: 40 },
-    { id: "moscow", name: "Moskova", country: "SOV", x: 80, y: 60 },
-    { id: "rome", name: "Roma", country: "ITA", x: 55, y: 65 }
-  ];
+<div class="tooltip" id="tooltip"></div>
 
-  // Örnek ülkeler
+<script>
+  /* ========== VERİ MODELİ ========== */
+  // Basit ülke modeli. İstersen burayı JSON veya daha karmaşık hale getirebiliriz.
   const countries = {
     GER: {
+      code: "GER",
       name: "Almanya",
       capital: "berlin",
-      flagColor: "#d00",
-      manpower: 500,
-      steel: 100,
-      oil: 80,
+      flagColor: "#bb3333",
+      manpower: 650,
+      steel: 120,
+      oil: 90,
       focuses: [
-        { id: "rearmament", name: "Yeniden Silahlanma", description: "Orduyu güçlendirin.", completed: false },
-        { id: "industrial_expansion", name: "Sanayi Genişletmesi", description: "Fabrika sayısını artır.", completed: false },
-        { id: "blitzkrieg", name: "Yıldırım Savaşı", description: "Hızlı saldırı taktikleri.", completed: false },
+        { id: "rearmament", name: "Yeniden Silahlanma", description: "Orduyu güçlendirin.", completed: false, cost: 5, requires: [] },
+        { id: "industrial_expansion", name: "Sanayi Genişletmesi", description: "Fabrika sayısını artır.", completed: false, cost: 7, requires: [] },
+        { id: "blitzkrieg", name: "Yıldırım Savaşı", description: "Hızlı saldırı taktikleri.", completed: false, cost: 6, requires: ["rearmament"] },
+        { id: "tank_development", name: "Tank Geliştirme", description: "Tank teknolojisini geliştir.", completed: false, cost: 6, requires: ["rearmament"] },
+        { id: "air_superiority", name: "Hava Üstünlüğü", description: "Hava gücünü artır.", completed: false, cost: 5, requires: ["industrial_expansion"] },
+        { id: "naval_build", name: "Donanma İnşası", description: "Donanmayı güçlendir.", completed: false, cost: 8, requires: ["industrial_expansion"] },
       ],
       diplomacy: {
         allies: ["ITA"],
         enemies: ["FRA", "ENG", "SOV"],
         neutral: ["POL", "HUN"]
       },
-      army: { infantry: 50, tanks: 20, planes: 30, ships: 15 },
-      factories: { military: 20, civilian: 15, naval: 10 }
+      army: { infantry: 70, tanks: 25, planes: 30, ships: 18 },
+      factories: { military: 18, civilian: 12, naval: 10 },
+      productionQueue: [],
+    },
+
+    FRA: {
+      code: "FRA",
+      name: "Fransa",
+      capital: "paris",
+      flagColor: "#3555aa",
+      manpower: 600,
+      steel: 90,
+      oil: 70,
+      focuses: [
+        { id: "maginot_line", name: "Maginot Hattı", description: "Sınırları güçlendir.", completed: false, cost: 6, requires: [] },
+        { id: "defensive_war", name: "Savunma Savaşı", description: "Ordunu savunmaya hazırla.", completed: false, cost: 7, requires: ["maginot_line"] },
+        { id: "industrial_growth", name: "Sanayi Büyümesi", description: "Fabrikaları artır.", completed: false, cost: 6, requires: [] },
+      ],
+      diplomacy: {
+        allies: ["ENG"],
+        enemies: ["GER"],
+        neutral: ["BEL", "SUI"]
+      },
+      army: { infantry: 80, tanks: 10, planes: 20, ships: 25 },
+      factories: { military: 16, civilian: 14, naval: 12 },
+      productionQueue: [],
+    },
+
+    ENG: {
+      code: "ENG",
+      name: "İngiltere",
+      capital: "london",
+      flagColor: "#aabbcc",
+      manpower: 700,
+      steel: 110,
+      oil: 85,
+      focuses: [
+        { id: "royal_navy_expansion", name: "Kraliyet Donanması Genişlemesi", description: "Deniz gücünü artır.", completed: false, cost: 7, requires: [] },
+        { id: "air_force_growth", name: "Hava Kuvvetleri Büyümesi", description: "Hava gücünü artır.", completed: false, cost: 6, requires: [] },
+        { id: "colonial_expansion", name: "Sömürge Genişlemesi", description: "Sömürgelerini genişlet.", completed: false, cost: 8, requires: [] },
+      ],
+      diplomacy: {
+        allies: ["FRA", "USA"],
+        enemies: ["GER"],
+        neutral: ["IRE"]
+      },
+      army: { infantry: 60, tanks: 20, planes: 40, ships: 35 },
+      factories: { military: 20, civilian: 18, naval: 15 },
+      productionQueue: [],
     }
   };
 
-  let selectedCountryCode = "GER";
+  // Şehir verileri
+  const cities = [
+    { id: "berlin", name: "Berlin", country: "GER", x: 58, y: 40 },
+    { id: "munich", name: "Münih", country: "GER", x: 55, y: 48 },
+    { id: "paris", name: "Paris", country: "FRA", x: 42, y: 53 },
+    { id: "lyon", name: "Lyon", country: "FRA", x: 44, y: 60 },
+    { id: "london", name: "Londra", country: "ENG", x: 38, y: 42 },
+    { id: "manchester", name: "Manchester", country: "ENG", x: 36, y: 39 },
+  ];
 
-  function renderFlag(color) {
-    const flag = document.getElementById("country-flag");
-    flag.style.background = color;
+  let selectedCountryCode = "GER";
+  let selectedCityId = null;
+  let tooltipTimer;
+
+  /* ========== YARDIMCI FONKSİYONLAR ========== */
+  function log(text) {
+    const logDiv = document.getElementById("log");
+    const time = new Date().toLocaleTimeString();
+    logDiv.innerHTML += `[${time}] ${text}<br>`;
+    logDiv.scrollTop = logDiv.scrollHeight;
   }
 
+  // Tooltip göster
+  function showTooltip(text, x, y) {
+    const tip = document.getElementById("tooltip");
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+    tip.innerHTML = text;
+    tip.classList.add("visible");
+  }
+  function hideTooltip() {
+    const tip = document.getElementById("tooltip");
+    tip.classList.remove("visible");
+  }
+
+  // Kilit durumu (odak gereksinimleri karşılanıyor mu)
+  function canFocusBeUnlocked(focus, focuses) {
+    if (!focus.requires || focus.requires.length === 0) return true;
+    return focus.requires.every(r => {
+      const reqFocus = focuses.find(f => f.id === r);
+      return reqFocus && reqFocus.completed;
+    });
+  }
+
+  /* ========== RENDER FONKSİYONLARI ========== */
+
+  // Bayrak ve temel info
   function renderCountryInfo(country) {
+    const flag = document.getElementById("country-flag");
+    flag.style.background = country.flagColor || "#555";
+
     const info = document.getElementById("country-info");
+    const capitalCity = cities.find(c => c.id === country.capital);
     info.innerHTML = `
       <h1>${country.name}</h1>
-      <p>Başkent: ${cities.find(c => c.id === country.capital).name} | İşgücü: ${country.manpower} | Çelik: ${country.steel} | Petrol: ${country.oil}</p>
+      <p>Başkent: ${capitalCity?.name || "-"} | İşgücü: ${country.manpower} | Çelik: ${country.steel} | Petrol: ${country.oil}</p>
     `;
   }
 
+  // Odak ağacı
   function renderFocusTree(country) {
     const container = document.getElementById("focus-tree");
     container.innerHTML = "";
+
     country.focuses.forEach(focus => {
+      const unlocked = canFocusBeUnlocked(focus, country.focuses);
       const div = document.createElement("div");
-      div.className = "focus" + (focus.completed ? " completed" : "");
-      div.textContent = focus.name;
+      div.className = "focus" + (focus.completed ? " completed" : "") + (unlocked ? "" : " locked");
       div.title = focus.description;
-      if (!focus.completed) {
+      div.innerHTML = `<div><strong>${focus.name}</strong></div><div class="desc">${focus.description}</div>`;
+
+      if (!focus.completed && unlocked) {
+        div.style.cursor = "pointer";
         div.onclick = () => {
-          focus.completed = true;
-          log(`Odak "${focus.name}" tamamlandı.`);
-          renderFocusTree(country);
+          completeFocus(focus.id);
         };
       }
       container.appendChild(div);
     });
   }
 
+  // Şehirleri haritada göster
   function renderCities() {
     const map = document.getElementById("map");
+    map.innerHTML = ""; // temizle
+
     cities.forEach(city => {
       const cityDiv = document.createElement("div");
       cityDiv.className = "city";
       cityDiv.style.left = city.x + "%";
       cityDiv.style.top = city.y + "%";
-      cityDiv.title = city.name + " (" + countries[city.country]?.name + ")";
+      cityDiv.title = city.name + " (" + (countries[city.country]?.name || "") + ")";
       cityDiv.textContent = city.name[0];
-      cityDiv.onclick = () => {
-        if (countries[city.country]) {
-          selectCountry(city.country);
-        }
+
+      if (city.id === selectedCityId) {
+        cityDiv.classList.add("selected");
+      }
+
+      cityDiv.onmouseenter = e => {
+        showTooltip(city.name + "<br><small>" + (countries[city.country]?.name || "") + "</small>", e.pageX + 12, e.pageY + 12);
       };
+      cityDiv.onmouseleave = () => {
+        hideTooltip();
+      };
+      cityDiv.onclick = () => {
+        selectedCityId = city.id;
+        selectCountry(city.country);
+        renderCities();
+      };
+
       map.appendChild(cityDiv);
     });
   }
 
+  // Diplomasi paneli
   function renderDiplomacy(country) {
     const dip = document.getElementById("diplomacy-info");
     dip.innerHTML = `
@@ -345,15 +575,44 @@
     `;
   }
 
+  // Üretim bilgisi
   function renderProduction(country) {
     const prod = document.getElementById("production-info");
     prod.innerHTML = `
       <p><strong>Askeri Fabrikalar:</strong> ${country.factories.military}</p>
       <p><strong>Sivil Fabrikalar:</strong> ${country.factories.civilian}</p>
       <p><strong>Deniz Fabrikaları:</strong> ${country.factories.naval}</p>
+      <p><strong>Çelik:</strong> ${country.steel}</p>
+      <p><strong>Petrol:</strong> ${country.oil}</p>
     `;
+
+    renderProductionQueue(country);
   }
 
+  // Üretim kuyruğu gösterimi
+  function renderProductionQueue(country) {
+    const queueDiv = document.getElementById("production-queue");
+    queueDiv.innerHTML = "";
+
+    if (country.productionQueue.length === 0) {
+      queueDiv.innerHTML = "<em>Üretim kuyruğu boş</em>";
+      return;
+    }
+
+    country.productionQueue.forEach((item, idx) => {
+      const div = document.createElement("div");
+      div.className = "production-queue-item";
+      div.innerHTML = `<span>${item.name} (${item.type}) - Kalan: ${item.timeLeft} tur</span> <button title="İptal et">X</button>`;
+      div.querySelector("button").onclick = () => {
+        country.productionQueue.splice(idx, 1);
+        log(`${country.name} üretim kuyruğundan '${item.name}' iptal edildi.`);
+        renderProductionQueue(country);
+      };
+      queueDiv.appendChild(div);
+    });
+  }
+
+  // Ordu bilgisi gösterimi
   function renderArmy(country) {
     const army = document.getElementById("army-info");
     army.innerHTML = `
@@ -361,432 +620,231 @@
       <p><strong>Tank:</strong> ${country.army.tanks}</p>
       <p><strong>Uçak:</strong> ${country.army.planes}</p>
       <p><strong>Gemi:</strong> ${country.army.ships}</p>
+      <p><strong>İşgücü:</strong> ${country.manpower}</p>
     `;
-  }
 
-  function log(text) {
-    const logDiv = document.getElementById("log");
-    const time = new Date().toLocaleTimeString();
-    logDiv.innerHTML += `[${time}] ${text}<br>`;
-    logDiv.scrollTop = logDiv.scrollHeight;
-  }
-
-  function selectCountry(code) {
-    if (!countries[code]) return;
-    selectedCountryCode = code;
-    const country = countries[code];
-    renderFlag(country.flagColor || "#555");
-    renderCountryInfo(country);
-    renderFocusTree(country);
-    renderDiplomacy(country);
-    renderProduction(country);
-    renderArmy(country);
-    log(`${country.name} seçildi.`);
-  }
-
-  function init() {
-    renderCities();
-    selectCountry(selectedCountryCode);
-  }
-
-  window.onload = init;
-
-
-  // Ülkeler
-  const countries = {
-    GER: {
-      name: "Almanya",
-      capital: "berlin",
-      factories: { military: 20, civilian: 15, naval: 10 },
-      resources: { steel: 100, oil: 80, manpower: 500 },
-      focuses: [
-        { id: "rearmament", name: "Yeniden Silahlanma", description: "Orduyu güçlendirin.", completed: false },
-        { id: "autarky", name: "Otonomi Ekonomisi", description: "Kendi kaynaklarımızı kullan.", completed: false },
-        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomatik etkiyi artır.", completed: false },
-        { id: "fortify_borders", name: "Sınırları Güçlendir", description: "Savunmayı artır.", completed: false },
-        { id: "build_navy", name: "Donanma İnşası", description: "Deniz gücünü artır.", completed: false },
-        { id: "air_superiority", name: "Hava Üstünlüğü", description: "Hava kuvvetlerini geliştir.", completed: false },
-        { id: "blitzkrieg", name: "Yıldırım Savaşı", description: "Hızlı saldırı taktikleri.", completed: false },
-        { id: "research_tanks", name: "Tank Araştırması", description: "Tank teknolojisini geliştirin.", completed: false },
-        { id: "infrastructure", name: "Altyapı Geliştirme", description: "Lojistik ve ulaşımı artır.", completed: false },
-        { id: "industrial_expansion", name: "Sanayi Genişletmesi", description: "Fabrika sayısını artır.", completed: false },
-      ],
-      army: { infantry: 50, tanks: 20, planes: 30, ships: 15 },
-      diplomacy: { allies: ["ITA"], enemies: ["FRA", "ENG", "SOV"], neutral: ["POL", "HUN"] },
-    },
-    FRA: {
-      name: "Fransa",
-      capital: "paris",
-      factories: { military: 18, civilian: 20, naval: 12 },
-      resources: { steel: 80, oil: 60, manpower: 450 },
-      focuses: [
-        { id: "maginot_line", name: "Maginot Hattı", description: "Sınır savunması güçlendir.", completed: false },
-        { id: "defensive_doctrine", name: "Savunma Doktrini", description: "Orduyu savunma üzerine kur.", completed: false },
-        { id: "build_airforce", name: "Hava Kuvvetleri İnşası", description: "Hava gücünü artır.", completed: false },
-        { id: "research_artillery", name: "Topçu Araştırması", description: "Topçu gücünü artır.", completed: false },
-        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasi ile etkiyi artır.", completed: false },
-        { id: "industrial_upgrade", name: "Sanayi Modernizasyonu", description: "Fabrikaları yenile.", completed: false },
-        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
-        { id: "naval_build", name: "Donanma İnşası", description: "Deniz gücünü artır.", completed: false },
-        { id: "alliances", name: "Müttefiklerle İttifak", description: "Diplomatik bağları güçlendir.", completed: false },
-        { id: "air_superiority", name: "Hava Üstünlüğü", description: "Hava kuvvetlerini geliştir.", completed: false },
-      ],
-      army: { infantry: 40, tanks: 10, planes: 25, ships: 20 },
-      diplomacy: { allies: ["ENG"], enemies: ["GER"], neutral: ["ITA", "POL"] },
-    },
-    ENG: {
-      name: "İngiltere",
-      capital: "london",
-      factories: { military: 15, civilian: 18, naval: 25 },
-      resources: { steel: 90, oil: 110, manpower: 400 },
-      focuses: [
-        { id: "naval_supremacy", name: "Deniz Üstünlüğü", description: "Deniz gücünü artır.", completed: false },
-        { id: "air_defense", name: "Hava Savunması", description: "Hava üslerini güçlendir.", completed: false },
-        { id: "industrial_growth", name: "Sanayi Büyümesi", description: "Fabrika üretimini artır.", completed: false },
-        { id: "alliance_strengthen", name: "İttifakları Güçlendir", description: "Diplomatik bağları artır.", completed: false },
-        { id: "research_radar", name: "Radar Araştırması", description: "Teknolojiyi geliştir.", completed: false },
-        { id: "colonial_recruitment", name: "Kolonilerden Seferberlik", description: "Manpower artır.", completed: false },
-        { id: "air_force_expansion", name: "Hava Kuvvetleri Genişletmesi", description: "Uçak sayısını artır.", completed: false },
-        { id: "tank_production", name: "Tank Üretimi", description: "Tank gücünü artır.", completed: false },
-        { id: "fortify_islands", name: "Adaları Güçlendir", description: "Savunmayı artır.", completed: false },
-        { id: "spy_network", name: "Casus Ağı", description: "İstihbarat faaliyetleri.", completed: false },
-      ],
-      army: { infantry: 35, tanks: 15, planes: 40, ships: 30 },
-      diplomacy: { allies: ["FRA"], enemies: ["GER"], neutral: ["SOV"] },
-    },
-    SOV: {
-      name: "Sovyetler Birliği",
-      capital: "moscow",
-      factories: { military: 22, civilian: 17, naval: 8 },
-      resources: { steel: 120, oil: 90, manpower: 600 },
-      focuses: [
-        { id: "industrialization", name: "Sanayileşme", description: "Sanayi gücünü artır.", completed: false },
-        { id: "collectivization", name: "Kolektivizasyon", description: "Tarımı organize et.", completed: false },
-        { id: "red_army_expansion", name: "Kızıl Ordu Genişletme", description: "Orduyu büyüt.", completed: false },
-        { id: "tank_development", name: "Tank Geliştirme", description: "Tank teknolojisi.", completed: false },
-        { id: "air_force_growth", name: "Hava Kuvvetleri Büyümesi", description: "Hava gücünü artır.", completed: false },
-        { id: "spy_network", name: "Casus Ağı", description: "İstihbarat.", completed: false },
-        { id: "fortify_west", name: "Batı Sınırlarını Güçlendir", description: "Savunmayı artır.", completed: false },
-        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
-        { id: "research_artillery", name: "Topçu Araştırması", description: "Topçu gücünü artır.", completed: false },
-        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasiyle etkiyi artır.", completed: false },
-      ],
-      army: { infantry: 60, tanks: 25, planes: 35, ships: 10 },
-      diplomacy: { allies: [], enemies: ["GER"], neutral: ["POL"] },
-    },
-    ITA: {
-      name: "İtalya",
-      capital: "rome",
-      factories: { military: 12, civilian: 10, naval: 7 },
-      resources: { steel: 70, oil: 50, manpower: 350 },
-      focuses: [
-        { id: "fascist_expansion", name: "Faşist Yayılma", description: "Toprak kazan.", completed: false },
-        { id: "build_aviation", name: "Hava Kuvvetleri İnşası", description: "Uçak üretimini artır.", completed: false },
-        { id: "naval_build", name: "Donanma İnşası", description: "Deniz gücünü geliştir.", completed: false },
-        { id: "infantry_upgrades", name: "Piyade Yükseltmeleri", description: "Askeri güç artır.", completed: false },
-        { id: "infrastructure", name: "Altyapı Geliştirme", description: "Lojistik artır.", completed: false },
-        { id: "industrial_growth", name: "Sanayi Büyümesi", description: "Fabrika sayısını artır.", completed: false },
-        { id: "mobilization", name: "Seferberlik", description: "Manpower artır.", completed: false },
-        { id: "research_tanks", name: "Tank Araştırması", description: "Tank teknolojisini geliştir.", completed: false },
-        { id: "expand_influence", name: "Etkileşim Alanını Genişlet", description: "Diplomasi geliştir.", completed: false },
-        { id: "fortify_borders", name: "Sınır Güçlendirme", description: "Savunmayı artır.", completed: false },
-      ],
-      army: { infantry: 30, tanks: 10, planes: 15, ships: 12 },
-      diplomacy: { allies: ["GER"], enemies: ["FRA"], neutral: ["ENG"] },
-    },
-  };
-
-  let selectedCountryCode = null;
-
-  // --- Yardımcı Fonksiyonlar ---
-
-  // Haritaya şehirleri yerleştir
-  function renderMap() {
-    const map = document.getElementById("map");
-    map.innerHTML = "";
-    cities.forEach(city => {
-      const cityDiv = document.createElement("div");
-      cityDiv.className = "city";
-      cityDiv.style.left = city.x + "%";
-      cityDiv.style.top = city.y + "%";
-      cityDiv.title = city.name + " (" + countries[city.country].name + ")";
-      cityDiv.textContent = city.name[0];
-      cityDiv.onclick = () => selectCountry(city.country);
-      map.appendChild(cityDiv);
-    });
-  }
-
-  // Ülke seçimi
-  function selectCountry(code) {
-    selectedCountryCode = code;
-    const country = countries[code];
-    document.getElementById("country-name").textContent = country.name;
-    renderCountryInfo(country);
-    renderFocusTree(country);
-    renderDiplomacy(country);
-    renderProduction(country);
-    renderArmy(country);
-    log(`"${country.name}" seçildi.`);
-  }
-
-  // Ülke bilgileri
-  function renderCountryInfo(country) {
-    const info = document.getElementById("country-info");
-    info.innerHTML = `
-      <strong>Başkent:</strong> ${cities.find(c => c.id === country.capital).name}<br>
-      <strong>Fabrikalar:</strong> Askeri: ${country.factories.military}, Sivil: ${country.factories.civilian}, Deniz: ${country.factories.naval}<br>
-      <strong>Kaynaklar:</strong> Çelik: ${country.resources.steel}, Petrol: ${country.resources.oil}, İşgücü: ${country.resources.manpower}<br>
-    `;
-  }
-
-  // Odak Ağacı
-  function renderFocusTree(country) {
-    const container = document.getElementById("focus-tree");
-    container.innerHTML = "";
-    country.focuses.forEach(focus => {
-      const div = document.createElement("div");
-      div.className = "focus" + (focus.completed ? " completed" : "");
-      div.textContent = focus.name;
-      div.title = focus.description;
-      if (!focus.completed) {
-        div.onclick = () => completeFocus(country, focus.id);
-      }
-      container.appendChild(div);
-    });
+    // Butonları güncelle
+    updateProductionButtons(country);
   }
 
   // Odak tamamla
-  function completeFocus(country, focusId) {
+  function completeFocus(focusId) {
+    const country = countries[selectedCountryCode];
     const focus = country.focuses.find(f => f.id === focusId);
-    if (focus && !focus.completed) {
-      focus.completed = true;
-      applyFocusEffects(country, focusId);
-      renderFocusTree(country);
-      log(`${country.name} odak "${focus.name}" tamamlandı.`);
-    }
-  }
+    if (!focus) return;
+    if (focus.completed) return;
 
-  // Odak etkileri
-  function applyFocusEffects(country, focusId) {
-    switch (focusId) {
-      case "rearmament":
-      case "red_army_expansion":
-      case "mobilization":
-        country.resources.manpower += 50;
-        break;
-      case "industrial_expansion":
-      case "industrialization":
-      case "industrial_growth":
-        country.factories.civilian += 5;
-        country.factories.military += 5;
-        break;
-      case "build_navy":
-      case "naval_build":
-      case "naval_build":
-        country.factories.naval += 5;
-        break;
-      case "expand_influence":
-        // Diplomatik ilişkileri artır (örnek: düşmanları azalt)
-        if (country.diplomacy.enemies.length > 0) {
-          country.diplomacy.enemies.pop();
-        }
-        break;
-      case "fortify_borders":
-      case "fortify_west":
-      case "fortify_borders":
-      case "fortify_islands":
-        // Savunmayı artır - ordu güçlendirme
-        country.army.infantry += 5;
-        break;
-      case "blitzkrieg":
-        country.army.tanks += 10;
-        break;
-      case "research_tanks":
-      case "tank_development":
-      case "tank_production":
-        country.army.tanks += 5;
-        break;
-      case "air_superiority":
-      case "air_force_expansion":
-      case "air_force_growth":
-        country.army.planes += 10;
-        break;
-      // Diğer odaklar için eklemeler yapılabilir.
-    }
-  }
-
-  // Diplomasi
-  function renderDiplomacy(country) {
-    const container = document.getElementById("diplomacy-info");
-    container.innerHTML = `
-      <strong>Müttefikler:</strong> ${country.diplomacy.allies.map(c => countries[c].name).join(", ") || "Yok"}<br>
-      <strong>Düşmanlar:</strong> ${country.diplomacy.enemies.map(c => countries[c].name).join(", ") || "Yok"}<br>
-      <strong>Tarafsızlar:</strong> ${country.diplomacy.neutral.map(c => countries[c].name).join(", ") || "Yok"}<br>
-      <button onclick="declareWar()">Savaş İlan Et</button>
-      <button onclick="offerPeace()">Barış Teklifi</button>
-    `;
-  }
-
-  // Savaş ilanı (örnek: seçilen ülke düşman eklenir)
-  function declareWar() {
-    if (!selectedCountryCode) return alert("Önce ülke seçin.");
-    const country = countries[selectedCountryCode];
-    const enemyCode = prompt("Kime savaş ilan etmek istiyorsunuz? Ülke kodu girin (örn: GER, FRA):");
-    if (!enemyCode || !countries[enemyCode]) {
-      alert("Geçersiz ülke kodu.");
+    if (!canFocusBeUnlocked(focus, country.focuses)) {
+      alert("Bu odağı açmak için gereken ön koşullar tamamlanmadı.");
       return;
     }
-    if (!country.diplomacy.enemies.includes(enemyCode)) {
-      country.diplomacy.enemies.push(enemyCode);
-      // Karşılıklı düşman ekle
-      const enemy = countries[enemyCode];
-      if (!enemy.diplomacy.enemies.includes(selectedCountryCode)) {
-        enemy.diplomacy.enemies.push(selectedCountryCode);
-      }
-      log(`${country.name} ${enemy.name} ile savaşa girdi!`);
-      renderDiplomacy(country);
-    } else {
-      alert("Zaten düşman durumundasınız.");
-    }
-  }
 
-  // Barış teklifi (örnek: düşmanlardan çıkar)
-  function offerPeace() {
-    if (!selectedCountryCode) return alert("Önce ülke seçin.");
-    const country = countries[selectedCountryCode];
-    const enemyCode = prompt("Kime barış teklif etmek istiyorsunuz? Ülke kodu girin:");
-    if (!enemyCode || !countries[enemyCode]) {
-      alert("Geçersiz ülke kodu.");
+    if (country.manpower < focus.cost * 20) { // örnek cost
+      alert("Yeterli işgücünüz yok.");
       return;
     }
-    if (country.diplomacy.enemies.includes(enemyCode)) {
-      country.diplomacy.enemies = country.diplomacy.enemies.filter(c => c !== enemyCode);
-      // Karşılıklı düşmanlıktan çıkar
-      const enemy = countries[enemyCode];
-      enemy.diplomacy.enemies = enemy.diplomacy.enemies.filter(c => c !== selectedCountryCode);
-      log(`${country.name} ve ${enemy.name} barış yaptı.`);
-      renderDiplomacy(country);
-    } else {
-      alert("Zaten düşman değilsiniz.");
+
+    // Odak tamamlandı
+    focus.completed = true;
+    country.manpower -= focus.cost * 20;
+    log(`${country.name} odak '${focus.name}' tamamlandı. İşgücü -${focus.cost * 20}`);
+
+    // Odak etkileri (örnek)
+    if (focus.id === "industrial_expansion") {
+      country.factories.civilian += 3;
+      log(`${country.name} 3 yeni sivil fabrika inşa etti.`);
     }
+    if (focus.id === "rearmament") {
+      country.factories.military += 5;
+      log(`${country.name} 5 yeni askeri fabrika inşa etti.`);
+    }
+    if (focus.id === "blitzkrieg") {
+      country.army.tanks += 10;
+      log(`${country.name} ordusuna 10 tank takviyesi yaptı.`);
+    }
+
+    renderAll();
   }
 
-  // Üretim paneli
-  function renderProduction(country) {
-    const container = document.getElementById("production-info");
-    container.innerHTML = `
-      <strong>Askeri Fabrikalar:</strong> ${country.factories.military}<br>
-      <strong>Sivil Fabrikalar:</strong> ${country.factories.civilian}<br>
-      <strong>Deniz Fabrikaları:</strong> ${country.factories.naval}<br>
-      <button onclick="buildFactory('military')">Askeri Fabrika İnşa Et (Kaynak: 50 Çelik)</button>
-      <button onclick="buildFactory('civilian')">Sivil Fabrika İnşa Et (Kaynak: 30 Çelik)</button>
-      <button onclick="buildFactory('naval')">Deniz Fabrikası İnşa Et (Kaynak: 40 Çelik)</button>
-    `;
-  }
-
-  // Fabrika inşası
-  function buildFactory(type) {
-    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+  // Üretim kuyruk ekle
+  function addToProductionQueue(type, name, costSteel, costFactory, time) {
     const country = countries[selectedCountryCode];
-    let cost = 0;
-    switch(type) {
-      case "military": cost = 50; break;
-      case "civilian": cost = 30; break;
-      case "naval": cost = 40; break;
-    }
-    if (country.resources.steel >= cost) {
-      country.resources.steel -= cost;
-      country.factories[type]++;
-      log(`${country.name} bir ${type} fabrikası inşa etti.`);
-      renderProduction(country);
-      renderCountryInfo(country);
-    } else {
+    if (country.steel < costSteel) {
       alert("Yeterli çelik yok.");
+      return false;
     }
+    if (type === "unit" && country.factories.military < costFactory) {
+      alert("Yeterli askeri fabrika yok.");
+      return false;
+    }
+    if (type === "factory" && country.factories.civilian < costFactory) {
+      alert("Yeterli sivil fabrika yok.");
+      return false;
+    }
+
+    country.productionQueue.push({
+      type,
+      name,
+      costSteel,
+      costFactory,
+      timeLeft: time
+    });
+
+    log(`${country.name} üretim kuyruğuna '${name}' eklendi.`);
+    renderProductionQueue(country);
+    return true;
   }
 
-  // Askeri panel
-  function renderArmy(country) {
-    const container = document.getElementById("army-info");
-    container.innerHTML = `
-      <strong>Piyade:</strong> ${country.army.infantry}<br>
-      <strong>Tank:</strong> ${country.army.tanks}<br>
-      <strong>Uçak:</strong> ${country.army.planes}<br>
-      <strong>Gemi:</strong> ${country.army.ships}<br>
-      <button onclick="trainArmy('infantry')">Piyade Eğit (İşgücü: 10)</button>
-      <button onclick="trainArmy('tanks')">Tank Üret (Fabrika: 5, Çelik: 30)</button>
-      <button onclick="trainArmy('planes')">Uçak Üret (Fabrika: 3, Çelik: 20)</button>
-      <button onclick="trainArmy('ships')">Gemi İnşa Et (Fabrika: 4, Çelik: 40)</button>
-    `;
+  // Üretim butonları durum kontrolü
+  function updateProductionButtons(country) {
+    document.getElementById("btn-build-civilian").disabled = country.steel < 30;
+    document.getElementById("btn-build-military").disabled = country.steel < 50;
+    document.getElementById("btn-build-naval").disabled = country.steel < 40;
+
+    document.getElementById("btn-train-infantry").disabled = country.manpower < 10;
+    document.getElementById("btn-produce-tank").disabled = country.factories.military < 5 || country.steel < 30;
+    document.getElementById("btn-produce-plane").disabled = country.factories.military < 3 || country.steel < 20;
+    document.getElementById("btn-produce-ship").disabled = country.factories.naval < 4 || country.steel < 40;
   }
 
-  // Askeri eğitim / üretim
-  function trainArmy(type) {
-    if (!selectedCountryCode) return alert("Önce ülke seçin.");
+  // Üretim turu işle
+  function productionTick() {
+    Object.values(countries).forEach(country => {
+      if (country.productionQueue.length === 0) return;
+
+      const current = country.productionQueue[0];
+      current.timeLeft--;
+      if (current.timeLeft <= 0) {
+        // Üretim tamamlandı
+        country.productionQueue.shift();
+
+        if (current.type === "factory") {
+          if (current.name.includes("Sivil")) country.factories.civilian++;
+          else if (current.name.includes("Askeri")) country.factories.military++;
+          else if (current.name.includes("Deniz")) country.factories.naval++;
+          country.steel -= current.costSteel;
+          log(`${country.name} yeni fabrika inşa etti: ${current.name}. Çelik -${current.costSteel}`);
+        }
+        else if (current.type === "unit") {
+          if (current.name.includes("Piyade")) {
+            country.army.infantry += 10;
+            country.manpower -= 10;
+          }
+          else if (current.name.includes("Tank")) {
+            country.army.tanks += 5;
+            country.manpower -= 5;
+            country.steel -= current.costSteel;
+          }
+          else if (current.name.includes("Uçak")) {
+            country.army.planes += 5;
+            country.manpower -= 3;
+            country.steel -= current.costSteel;
+          }
+          else if (current.name.includes("Gemi")) {
+            country.army.ships += 3;
+            country.manpower -= 4;
+            country.steel -= current.costSteel;
+          }
+          log(`${country.name} yeni birim üretti: ${current.name}`);
+        }
+
+        renderAll();
+      }
+    });
+  }
+
+  /* ========== OYUN SEÇİMİ ========== */
+  function selectCountry(code) {
+    if (!countries[code]) return;
+    selectedCountryCode = code;
+    renderAll();
+    log(`${countries[code].name} seçildi.`);
+  }
+
+  function renderAll() {
     const country = countries[selectedCountryCode];
-    switch(type) {
-      case "infantry":
-        if (country.resources.manpower >= 10) {
-          country.resources.manpower -= 10;
-          country.army.infantry++;
-          log(`${country.name} bir piyade birimi eğitti.`);
-        } else {
-          alert("Yeterli işgücü yok.");
-        }
-        break;
-      case "tanks":
-        if (country.factories.military >=5 && country.resources.steel >= 30) {
-          country.factories.military -= 5;
-          country.resources.steel -= 30;
-          country.army.tanks++;
-          log(`${country.name} bir tank üretti.`);
-        } else {
-          alert("Yeterli fabrika veya çelik yok.");
-        }
-        break;
-      case "planes":
-        if (country.factories.military >=3 && country.resources.steel >= 20) {
-          country.factories.military -= 3;
-          country.resources.steel -= 20;
-          country.army.planes++;
-          log(`${country.name} bir uçak üretti.`);
-        } else {
-          alert("Yeterli fabrika veya çelik yok.");
-        }
-        break;
-      case "ships":
-        if (country.factories.naval >=4 && country.resources.steel >= 40) {
-          country.factories.naval -= 4;
-          country.resources.steel -= 40;
-          country.army.ships++;
-          log(`${country.name} bir gemi inşa etti.`);
-        } else {
-          alert("Yeterli fabrika veya çelik yok.");
-        }
-        break;
-    }
-    renderArmy(country);
-    renderProduction(country);
     renderCountryInfo(country);
+    renderFocusTree(country);
+    renderCities();
+    renderDiplomacy(country);
+    renderProduction(country);
+    renderArmy(country);
   }
 
-  // Olay günlüğü
-  function log(text) {
-    const logDiv = document.getElementById("log");
-    const time = new Date().toLocaleTimeString();
-    logDiv.innerHTML += `[${time}] ${text}<br>`;
-    logDiv.scrollTop = logDiv.scrollHeight;
-  }
+  /* ========== ETKİLEŞİMLER ========== */
 
-  // Oyunu başlat
-  function init() {
-    renderMap();
-    // Varsayılan ülke seçimi Almanya
-    selectCountry("GER");
-  }
+  document.getElementById("btn-build-civilian").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 30) {
+      country.steel -= 30;
+      country.productionQueue.push({ type: "factory", name: "Sivil Fabrika", costSteel: 30, costFactory: 1, timeLeft: 3 });
+      log(`${country.name} sivil fabrika inşasına başladı.`);
+      renderAll();
+    } else alert("Yeterli çelik yok.");
+  };
+  document.getElementById("btn-build-military").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 50) {
+      country.steel -= 50;
+      country.productionQueue.push({ type: "factory", name: "Askeri Fabrika", costSteel: 50, costFactory: 1, timeLeft: 4 });
+      log(`${country.name} askeri fabrika inşasına başladı.`);
+      renderAll();
+    } else alert("Yeterli çelik yok.");
+  };
+  document.getElementById("btn-build-naval").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 40) {
+      country.steel -= 40;
+      country.productionQueue.push({ type: "factory", name: "Deniz Fabrikası", costSteel: 40, costFactory: 1, timeLeft: 5 });
+      log(`${country.name} deniz fabrikası inşasına başladı.`);
+      renderAll();
+    } else alert("Yeterli çelik yok.");
+  };
 
-  window.onload = init;
+  document.getElementById("btn-train-infantry").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.manpower >= 10) {
+      country.productionQueue.push({ type: "unit", name: "Piyade Birliği", costSteel: 0, costFactory: 3, timeLeft: 3 });
+      log(`${country.name} piyade birliği eğitmeye başladı.`);
+      renderAll();
+    } else alert("Yeterli işgücü yok.");
+  };
+  document.getElementById("btn-produce-tank").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 30 && country.factories.military >= 5) {
+      country.productionQueue.push({ type: "unit", name: "Tank Birliği", costSteel: 30, costFactory: 5, timeLeft: 5 });
+      log(`${country.name} tank üretimine başladı.`);
+      renderAll();
+    } else alert("Yeterli fabrika veya çelik yok.");
+  };
+  document.getElementById("btn-produce-plane").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 20 && country.factories.military >= 3) {
+      country.productionQueue.push({ type: "unit", name: "Uçak Birliği", costSteel: 20, costFactory: 3, timeLeft: 4 });
+      log(`${country.name} uçak üretimine başladı.`);
+      renderAll();
+    } else alert("Yeterli fabrika veya çelik yok.");
+  };
+  document.getElementById("btn-produce-ship").onclick = () => {
+    const country = countries[selectedCountryCode];
+    if (country.steel >= 40 && country.factories.naval >= 4) {
+      country.productionQueue.push({ type: "unit", name: "Gemi Birliği", costSteel: 40, costFactory: 4, timeLeft: 6 });
+      log(`${country.name} gemi üretimine başladı.`);
+      renderAll();
+    } else alert("Yeterli fabrika veya çelik yok.");
+  };
 
+  /* ========== OYUN DÖNGÜSÜ ========== */
+  setInterval(() => {
+    productionTick();
+  }, 2500); // her 2.5 saniyede 1 üretim adımı
+
+  /* ========== BAŞLANGIÇ ========== */
+  window.onload = () => {
+    renderAll();
+    log("Oyun başladı. Ülke seçin veya şehir tıklayın.");
+  };
 </script>
+
 </body>
 </html>
