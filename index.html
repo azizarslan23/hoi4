@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>WW2 Strateji Oyunu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #1e1e1e;
+      color: #fff;
+    }
+    header {
+      background-color: #2e2e2e;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      display: flex;
+      flex-direction: row;
+      height: calc(100vh - 80px);
+    }
+    section {
+      padding: 1rem;
+      flex: 1;
+      overflow-y: auto;
+      border-right: 1px solid #444;
+    }
+    button {
+      background: #444;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #666;
+    }
+    .country-button {
+      display: inline-block;
+      margin: 10px;
+      padding: 15px 25px;
+      background-color: #333;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌍 HOI4 Tarzı WW2 Strateji Oyunu</h1>
+</header>
+
+<div id="country-select" style="text-align:center; padding: 2rem;">
+  <h2>Bir Ülke Seçin</h2>
+  <div class="country-button" onclick="selectCountry('almanya')">🇩🇪 Almanya</div>
+  <div class="country-button" onclick="selectCountry('sovyetler')">🇷🇺 Sovyetler</div>
+  <div class="country-button" onclick="selectCountry('fransa')">🇫🇷 Fransa</div>
+</div>
+
+<main id="game-ui" class="hidden">
+  <section>
+    <h2>Odak Ağacı</h2>
+    <div id="focus-tree"></div>
+  </section>
+
+  <section>
+    <h2>Diplomasi</h2>
+    <div id="diplomacy-panel"></div>
+  </section>
+
+  <section>
+    <h2>Fabrikalar ve Üretim</h2>
+    <div id="factory-info"></div>
+    <button onclick="produceMilitary()">🔫 Askeri Üret</button>
+    <button onclick="produceCivil()">🏭 Sivil Üretim</button>
+  </section>
+
+  <section>
+    <h2>Ordu ve Savaş</h2>
+    <p>Asker Sayın: <span id="army-count">0</span></p>
+    <button onclick="trainArmy()">👨‍✈️ Asker Eğit</button>
+    <button onclick="declareWar()">🔥 Savaş İlan Et</button>
+  </section>
+</main>
+
+<script>
+  let currentCountry = "";
+  let army = 0;
+  let civFactories = 2;
+  let milFactories = 2;
+  let focuses = {
+    almanya: [
+      "Versailles’i Yık",
+      "Rheinland’ı Askerleştir",
+      "Avusturya’yı İlhak Et"
+    ],
+    sovyetler: [
+      "Beş Yıllık Plan",
+      "Siyasi Temizlik",
+      "Kolektivizasyon"
+    ],
+    fransa: [
+      "Maginot Hattı",
+      "İttifak Arayışı",
+      "Yeniden Silahlanma"
+    ]
+  };
+  let relations = {
+    almanya: {sovyetler: "tarafsız", fransa: "düşman"},
+    sovyetler: {almanya: "tarafsız", fransa: "tarafsız"},
+    fransa: {almanya: "düşman", sovyetler: "tarafsız"}
+  };
+
+  function selectCountry(country) {
+    currentCountry = country;
+    document.getElementById("country-select").classList.add("hidden");
+    document.getElementById("game-ui").classList.remove("hidden");
+    renderFocusTree();
+    renderDiplomacy();
+    renderFactory();
+  }
+
+  function renderFocusTree() {
+    const tree = focuses[currentCountry];
+    const container = document.getElementById("focus-tree");
+    container.innerHTML = "";
+    tree.forEach((f, i) => {
+      const btn = document.createElement("button");
+      btn.innerText = f;
+      btn.onclick = () => alert(`Odak tamamlandı: ${f}`);
+      container.appendChild(btn);
+    });
+  }
+
+  function renderDiplomacy() {
+    const panel = document.getElementById("diplomacy-panel");
+    panel.innerHTML = "";
+    Object.keys(relations[currentCountry]).forEach(target => {
+      const status = relations[currentCountry][target];
+      const btn = document.createElement("button");
+      btn.innerText = `${target.toUpperCase()} (${status})`;
+      btn.onclick = () => {
+        relations[currentCountry][target] = (status === "düşman") ? "tarafsız" : "düşman";
+        alert(`${target.toUpperCase()} ile ilişki ${relations[currentCountry][target]} oldu`);
+        renderDiplomacy();
+      };
+      panel.appendChild(btn);
+    });
+  }
